@@ -1,35 +1,30 @@
 #!/bin/bash
 
-token="<token>"
+token="578753873:AAEuDKFXMEVY9SoLLdMBpeOY0gN18dQWcPg"
 
-getUpdates(){
-	
+GetUpdate(){
 	json=""
 	ok=""
 	result=""
-	
-	while [[ "$ok" != "true" || "$result" == "null" ]]
+	while [ "$ok" != "true" ] || [ "$result" = "null" ]
 	do
-		
-		json=$(curl --progress-bar https://api.telegram.org/bot$token/getUpdates -d limit=1 -d timeout=1)
-		ok=$(echo $json | jq -r .ok)
-		result=$(echo $json | jq -r .result[0])
-		
-		echo $json | jq
-		
+		json=$(curl --progress-bar "https://api.telegram.org/bot$token/getUpdates" -d limit=1 -d timeout=30)
+		ok=$(printf "$json" | jq -r .ok)
+		result=$(printf "$json" | jq -r .result[0])
 	done
-	
-	update_id=$(echo $json | jq -r .result[0].update_id)
-	echo $update_id
+	update_id=$( printf "$json" | jq -r .result[0].update_id )
 }
 
-clearUpdate(){
-	
-	offset=$(($update_id+1))
-	echo $offset
-	curl https://api.telegram.org/bot$token/getUpdates -d offset=$offset
-	
+ClearUpdate(){
+	ok=""
+	while [ "$ok" != "true" ]
+	do
+		ok=$(curl -s "https://api.telegram.org/bot$token/getUpdates" -d offset=$(($update_id+1)) -d limit=1 | jq -r .ok)
+	done
 }
 
-getUpdates
-
+while true
+do
+	GetUpdate
+	ClearUpdate
+done
